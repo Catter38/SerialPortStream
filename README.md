@@ -230,7 +230,7 @@ For the Waveshre device, there is already a usable `WaveshareTcpSerialPortSettin
 class available, which creates the needed `SerialPortSettingsManager` with the
 provided credentials for the HTTP server.
 
-:warning: At least on the Waveshare devices, the settings are overwritten on the device.
+:warning: At least on Waveshare devices, the settings are overwritten on the device.
 
 ```cs
 WaveshareTcpSerialPortSettings settings = new WaveshareTcpSerialPortSettings(username: "admin", password: "admin") {

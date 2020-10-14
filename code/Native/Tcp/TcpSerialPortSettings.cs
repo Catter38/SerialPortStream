@@ -2,6 +2,12 @@
 {
     public class TcpSerialPortSettings : SerialPortSettings
     {
+        public new string PortName
+        {
+            get => $"tcp://{RemoteHost}:{RemotePort}";
+            set => UpdateHostAndPortFromPortName(value);
+        }
+
         public string RemoteHost { get; set; }
 
         public int RemotePort { get; set; }
@@ -25,12 +31,21 @@
 
         public TcpSerialPortSettings(SerialPortSettings settings)
         {
-            PortName = settings.PortName;
+            UpdateHostAndPortFromPortName(settings.PortName);
+
             BaudRate = settings.BaudRate;
             DataBits = settings.DataBits;
             Parity = settings.Parity;
             StopBits = settings.StopBits;
             Handshake = settings.Handshake;
+        }
+
+        private void UpdateHostAndPortFromPortName(string portName)
+        {
+            var hostAndPort = portName.ToLower().Replace("tcp://", "").Split(':');
+
+            RemoteHost = hostAndPort[0];
+            RemotePort = int.Parse(hostAndPort[1]);
         }
     }
 }

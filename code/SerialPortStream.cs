@@ -154,8 +154,7 @@ namespace RJCP.IO.Ports
             {
                 if (IsTcpPort(settings.PortName))
                 {
-                    var hostAndPort = port.ToLower().Replace("tcp://", "").Split(':');
-                    serialSettings = new TcpSerialPortSettings(settings) {RemoteHost = hostAndPort[0], RemotePort = int.Parse(hostAndPort[1])};
+                    serialSettings = new TcpSerialPortSettings(settings);
 
                     m_NativeSerial = new TcpSerial();
                 }

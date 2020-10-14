@@ -1,8 +1,12 @@
-# Serial Port Stream
+# Serial Port Stream (with TCP-Serial support)
 
 SerialPortStream is an independent implementation of
 `System.IO.Ports.SerialPort` and `SerialStream` for better reliability and
 maintainability, and now for portability to Mono on Linux systems.
+
+This fork of Serial Port Stream was created to support RS232-to-Ethernet hardware without using drivers.
+Basically the serial data is piped to the client through a TCP socket.
+It was tested with the [Waveshare RS232/485 TO ETH](https://www.waveshare.com/wiki/RS232/485_TO_ETH) device.
 
 The `SerialPortStream` is a ground up implementation of a Stream that buffers
 data to and from a serial port. It uses low level Win32API (on Windows) or Posix
@@ -28,6 +32,7 @@ enhances portability and fixes bugs. See the end of these notes for differences.
   * 4.2 Linux
 * 5.0 Extra Features
   * 5.1 Reading and Writing - Buffering
+  * 5.2 TCP-Serial
 * 6.0 Known Issues
   * 6.1 Windows
     * 6.1.1 Driver Specific Issues on Windows
@@ -209,6 +214,42 @@ process doesn't block, your main application might sleep for 10 seconds and
 you've still lost no data. The MS implementation wouldn't be so simple, you have
 to make sure that you perform frequent read operations else the driver itself
 might overflow (resulting in lost data).
+
+### 5.2 TCP-Serial
+
+TCP-Serial will be used if a TCP pipe is provided as the port (e.g.: `tcp://192.168.1.7:23`)
+or if a `TcpSerialPortSettings` object is used to construct the `SerialPortStream`.
+Since the settings of the port cannot be modified through the TCP pipe,
+it has to be done via the HTTP server of the device.
+The `TcpSerialPortSettings` object contains a `SerialPortSettingsManager` property,
+which will be used to update the settings of the port.
+If no `SerialPortSettingsManager` is provided or the TCP pipe is used
+to construct the `SerialPortStream`, the settings have to be manually
+updated in the frontend of the device.
+For the Waveshre device, there is already a usable `WaveshareTcpSerialPortSettings`
+class available, which creates the needed `SerialPortSettingsManager` with the
+provided credentials for the HTTP server.
+
+!! At least on the Waveshare devices, the settings are overwritten on the device.
+
+```cs
+WaveshareTcpSerialPortSettings settings = new WaveshareTcpSerialPortSettings(username: "admin", password: "admin") {
+  RemoteHost = "192.168.1.7",
+  RemotePort = 23,
+  BaudRate = 115200,
+  DataBits = 8,
+  Handshake = Handshake.None,
+  Parity = Parity.None,
+  StopBits = StopBits.One,
+  SyncBaudRate = true,
+  UartPacketTime = 0,
+  UartPacketLength = 0
+};
+
+ISerialPortStream serialPort = new SerialPortStream(settings);
+```
+
+The `ISerialPortSettingsManager` interface can be used to provide a custom `SerialPortSettingsManager` to update settings in a device which works differently.
 
 ## 6.0 Known Issues
 

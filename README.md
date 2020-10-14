@@ -221,12 +221,14 @@ TCP-Serial will be used if a TCP pipe is provided as the port (e.g.: `tcp://192.
 or if a `TcpSerialPortSettings` object is used to construct the `SerialPortStream`.
 Since the settings of the port cannot be modified through the TCP pipe,
 it has to be done via the HTTP server of the device.
+
 The `TcpSerialPortSettings` object contains a `SerialPortSettingsManager` property,
 which will be used to update the settings of the port.
 If no `SerialPortSettingsManager` is provided or the TCP pipe is used
 to construct the `SerialPortStream`, the settings have to be manually
 updated in the frontend of the device.
-For the Waveshre device, there is already a usable `WaveshareTcpSerialPortSettings`
+
+For Waveshare devices, there is already a usable `WaveshareTcpSerialPortSettings`
 class available, which creates the needed `SerialPortSettingsManager` with the
 provided credentials for the HTTP server.
 

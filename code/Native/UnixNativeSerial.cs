@@ -957,6 +957,16 @@ namespace RJCP.IO.Ports.Native
         /// </summary>
         public event EventHandler<SerialPinChangedEventArgs> PinChanged;
 
+        public void UpdateSettings(SerialPortSettings settings)
+        {
+            PortName = settings.PortName;
+            BaudRate = settings.BaudRate;
+            DataBits = settings.DataBits;
+            Parity = settings.Parity;
+            StopBits = settings.StopBits;
+            Handshake = settings.Handshake;
+        }
+
         protected virtual void OnPinChanged(object sender, SerialPinChangedEventArgs args)
         {
             EventHandler<SerialPinChangedEventArgs> handler = PinChanged;

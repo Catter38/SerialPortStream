@@ -324,5 +324,10 @@ namespace RJCP.IO.Ports.Native
         /// Occurs when modem pin changes are detected.
         /// </summary>
         event EventHandler<SerialPinChangedEventArgs> PinChanged;
+
+        /// <summary>
+        /// A way of updating all settings of the serial port without setting each property on it's own
+        /// </summary>
+        void UpdateSettings(SerialPortSettings settings);
     }
 }

@@ -7,6 +7,9 @@
 // this implementation.
 //#define DRIVERBUFFEREDBYTES
 
+using System.ComponentModel;
+using RJCP.IO.Ports.Native.Tcp;
+
 namespace RJCP.IO.Ports
 {
     using System;
@@ -56,7 +59,8 @@ namespace RJCP.IO.Ports
         /// This constructor initialises a stream object, but doesn't assign it to any COM port.
         /// The properties then assume default settings. No COM port is opened and queried.
         /// </remarks>
-        public SerialPortStream() : this(null)
+        public SerialPortStream()
+            : this(new SerialPortSettings())
         {
         }
 
@@ -70,15 +74,8 @@ namespace RJCP.IO.Ports
         /// </remarks>
         /// <param name="port">The name of the COM port, such as "COM1" or "COM33".</param>
         public SerialPortStream(string port)
+            : this(new SerialPortSettings {PortName = port})
         {
-            m_NativeSerial = CreateNativeSerial(port);
-            if (m_NativeSerial == null)
-                throw new NotSupportedException("SerialPortStream is not supported on this platform");
-
-            if (port != null) m_NativeSerial.PortName = port;
-
-            InitialiseEvents();
-            Log.Open();
         }
 
         /// <summary>
@@ -93,9 +90,9 @@ namespace RJCP.IO.Ports
         /// <param name="port">The name of the COM port, such as "COM1" or "COM33".</param>
         /// <param name="baud">The baud rate that is passed to the underlying driver.</param>
         public SerialPortStream(string port, int baud)
-            : this(port)
+            : this(new SerialPortSettings {BaudRate = baud, PortName = port})
         {
-            m_NativeSerial.BaudRate = baud;
+            //m_NativeSerial.BaudRate = baud;
         }
 
         /// <summary>
@@ -116,29 +113,76 @@ namespace RJCP.IO.Ports
         /// <param name="parity">The parity for the data stream.</param>
         /// <param name="stopbits">Number of stop bits.</param>
         public SerialPortStream(string port, int baud, int data, Parity parity, StopBits stopbits)
-            : this(port)
+            : this(new SerialPortSettings {BaudRate = baud, DataBits = data, Parity = parity, PortName = port, StopBits = stopbits})
         {
-            m_NativeSerial.BaudRate = baud;
-            m_NativeSerial.DataBits = data;
-            m_NativeSerial.Parity = parity;
-            m_NativeSerial.StopBits = stopbits;
+            //if (IsTcpPort(port))
+            //{
+            //    var hostAndPort = port.ToLower().Replace("tcp://", "").Split(':');
+
+            //    m_NativeSerial.UpdateSettings(new TcpSerialPortSettings
+            //    {
+            //        RemoteHost = hostAndPort[0],
+            //        RemotePort = int.Parse(hostAndPort[1]),
+            //        BaudRate = baud,
+            //        DataBits = data,
+            //        Parity = parity,
+            //        StopBits = stopbits
+            //    });
+            //}
+            //else
+            //{
+            //    m_NativeSerial.UpdateSettings(new SerialPortSettings
+            //    {
+            //        BaudRate = baud,
+            //        DataBits = data,
+            //        Parity = parity,
+            //        StopBits = stopbits
+            //    });
+            //}
         }
 
-        private static INativeSerial CreateNativeSerial(string portName = null)
+        public SerialPortStream(SerialPortSettings settings)
         {
-            if (portName != null)
-            {
-                if (portName.ToLower().StartsWith("tcp://"))
-                {
-                    var hostAndPort = portName.ToLower().Replace("tcp://", "").Split(':');
+            var port = settings.PortName;
+            var serialSettings = settings;
 
-                    return new TcpSerial(hostAndPort[0], int.Parse(hostAndPort[1]));
+            if (settings is TcpSerialPortSettings)
+            {
+                m_NativeSerial = new TcpSerial();
+            }
+            else
+            {
+                if (IsTcpPort(settings.PortName))
+                {
+                    var hostAndPort = port.ToLower().Replace("tcp://", "").Split(':');
+                    serialSettings = new TcpSerialPortSettings(settings) {RemoteHost = hostAndPort[0], RemotePort = int.Parse(hostAndPort[1])};
+
+                    m_NativeSerial = new TcpSerial();
+                }
+                else
+                {
+                    m_NativeSerial = CreateNativeSerial();
+                    if (m_NativeSerial == null)
+                        throw new NotSupportedException("SerialPortStream is not supported on this platform");
                 }
             }
 
+            m_NativeSerial.UpdateSettings(serialSettings);
+
+            InitialiseEvents();
+            Log.Open();
+        }
+
+        private static INativeSerial CreateNativeSerial()
+        {
             if (Platform.IsUnix()) return new UnixNativeSerial();
             if (Platform.IsWinNT()) return new WinNativeSerial();
             return null;
+        }
+
+        private static bool IsTcpPort(string portName)
+        {
+            return portName != null && portName.ToLower().StartsWith("tcp://");
         }
 
         /// <summary>

@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
+using RJCP.IO.Ports.Native.Tcp;
 using RJCP.IO.Ports.Trace;
 
 namespace RJCP.IO.Ports.Native
@@ -15,13 +16,13 @@ namespace RJCP.IO.Ports.Native
 
         public event EventHandler<SerialPinChangedEventArgs> PinChanged;
 
-        public int BaudRate { get; set; } = 115200;
+        public int BaudRate { get; set; }
 
-        public int DataBits { get; set; } = 8;
+        public int DataBits { get; set; }
 
-        public Parity Parity { get; set; } = Parity.None;
+        public Parity Parity { get; set; }
 
-        public StopBits StopBits { get; set; } = StopBits.One;
+        public StopBits StopBits { get; set; }
 
         public bool DiscardNull { get; set; }
 
@@ -39,7 +40,7 @@ namespace RJCP.IO.Ports.Native
 
         public bool RtsEnable { get; set; }
 
-        public Handshake Handshake { get; set; } = Handshake.None;
+        public Handshake Handshake { get; set; }
 
         public string PortName { get; set; }
 
@@ -81,9 +82,9 @@ namespace RJCP.IO.Ports.Native
 
         private readonly Socket m_Socket;
 
-        private readonly string m_Host;
+        private string m_Host;
 
-        private readonly int m_Port;
+        private int m_Port;
 
         private readonly AutoResetEvent m_ReceiveWaiter;
 
@@ -91,15 +92,33 @@ namespace RJCP.IO.Ports.Native
 
         private string m_Name;
 
-        public TcpSerial(string host, int port)
+        public TcpSerial()
         {
-            m_Host = host;
-            m_Port = port;
             m_ReceiveWaiter = new AutoResetEvent(false);
 
             PortName = $"{m_Host}:{m_Port}";
 
             m_Socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+        }
+
+        public void UpdateSettings(SerialPortSettings settings)
+        {
+            if (settings is TcpSerialPortSettings tcpSerialPortSettings)
+            {
+                m_Host = tcpSerialPortSettings.RemoteHost;
+                m_Port = tcpSerialPortSettings.RemotePort;
+                BaudRate = tcpSerialPortSettings.BaudRate;
+                DataBits = tcpSerialPortSettings.DataBits;
+                Parity = tcpSerialPortSettings.Parity;
+                StopBits = tcpSerialPortSettings.StopBits;
+                Handshake = tcpSerialPortSettings.Handshake;
+
+                tcpSerialPortSettings.SerialPortSettingsManager?.SetSettings(tcpSerialPortSettings);
+            }
+            else
+            {
+                throw new InvalidOperationException("Expected TcpSerialPortSettings!");
+            }
         }
 
         public string[] GetPortNames()

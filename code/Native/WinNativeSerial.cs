@@ -1051,6 +1051,16 @@ namespace RJCP.IO.Ports.Native
         /// </summary>
         public event EventHandler<SerialPinChangedEventArgs> PinChanged;
 
+        public void UpdateSettings(SerialPortSettings settings)
+        {
+            PortName = settings.PortName;
+            BaudRate = settings.BaudRate;
+            DataBits = settings.DataBits;
+            Parity = settings.Parity;
+            StopBits = settings.StopBits;
+            Handshake = settings.Handshake;
+        }
+
         /// <summary>
         /// Called when modem pin changes are detected.
         /// </summary>

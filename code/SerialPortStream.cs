@@ -56,14 +56,8 @@ namespace RJCP.IO.Ports
         /// This constructor initialises a stream object, but doesn't assign it to any COM port.
         /// The properties then assume default settings. No COM port is opened and queried.
         /// </remarks>
-        public SerialPortStream()
+        public SerialPortStream() : this(null)
         {
-            m_NativeSerial = CreateNativeSerial();
-            if (m_NativeSerial == null)
-                throw new NotSupportedException("SerialPortStream is not supported on this platform");
-
-            InitialiseEvents();
-            Log.Open();
         }
 
         /// <summary>
@@ -75,9 +69,16 @@ namespace RJCP.IO.Ports
         /// opened.
         /// </remarks>
         /// <param name="port">The name of the COM port, such as "COM1" or "COM33".</param>
-        public SerialPortStream(string port) : this()
+        public SerialPortStream(string port)
         {
+            m_NativeSerial = CreateNativeSerial(port);
+            if (m_NativeSerial == null)
+                throw new NotSupportedException("SerialPortStream is not supported on this platform");
+
             if (port != null) m_NativeSerial.PortName = port;
+
+            InitialiseEvents();
+            Log.Open();
         }
 
         /// <summary>
@@ -123,8 +124,18 @@ namespace RJCP.IO.Ports
             m_NativeSerial.StopBits = stopbits;
         }
 
-        private static INativeSerial CreateNativeSerial()
+        private static INativeSerial CreateNativeSerial(string portName = null)
         {
+            if (portName != null)
+            {
+                if (portName.ToLower().StartsWith("tcp://"))
+                {
+                    var hostAndPort = portName.ToLower().Replace("tcp://", "").Split(':');
+
+                    return new TcpSerial(hostAndPort[0], int.Parse(hostAndPort[1]));
+                }
+            }
+
             if (Platform.IsUnix()) return new UnixNativeSerial();
             if (Platform.IsWinNT()) return new WinNativeSerial();
             return null;

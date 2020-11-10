@@ -12,12 +12,6 @@
 
         public int RemotePort { get; set; }
 
-        public int UartPacketTime { get; set; } = 0;
-
-        public int UartPacketLength { get; set; } = 0;
-
-        public bool SyncBaudRate { get; set; } = true;
-
         public ITcpSerialPortSettingsManager SerialPortSettingsManager { get; set; }
 
         public TcpSerialPortSettings()
@@ -42,6 +36,11 @@
 
         private void UpdateHostAndPortFromPortName(string portName)
         {
+            if (portName.EndsWith("/"))
+            {
+                portName = portName.Remove(portName.Length - 1, 1);
+            }
+            
             var hostAndPort = portName.ToLower().Replace("tcp://", "").Split(':');
 
             RemoteHost = hostAndPort[0];

@@ -8,6 +8,7 @@
 //#define DRIVERBUFFEREDBYTES
 
 using System.ComponentModel;
+using System.Linq;
 using RJCP.IO.Ports.Native.Tcp;
 
 namespace RJCP.IO.Ports
@@ -92,7 +93,6 @@ namespace RJCP.IO.Ports
         public SerialPortStream(string port, int baud)
             : this(new SerialPortSettings {BaudRate = baud, PortName = port})
         {
-            //m_NativeSerial.BaudRate = baud;
         }
 
         /// <summary>
@@ -115,37 +115,12 @@ namespace RJCP.IO.Ports
         public SerialPortStream(string port, int baud, int data, Parity parity, StopBits stopbits)
             : this(new SerialPortSettings {BaudRate = baud, DataBits = data, Parity = parity, PortName = port, StopBits = stopbits})
         {
-            //if (IsTcpPort(port))
-            //{
-            //    var hostAndPort = port.ToLower().Replace("tcp://", "").Split(':');
-
-            //    m_NativeSerial.UpdateSettings(new TcpSerialPortSettings
-            //    {
-            //        RemoteHost = hostAndPort[0],
-            //        RemotePort = int.Parse(hostAndPort[1]),
-            //        BaudRate = baud,
-            //        DataBits = data,
-            //        Parity = parity,
-            //        StopBits = stopbits
-            //    });
-            //}
-            //else
-            //{
-            //    m_NativeSerial.UpdateSettings(new SerialPortSettings
-            //    {
-            //        BaudRate = baud,
-            //        DataBits = data,
-            //        Parity = parity,
-            //        StopBits = stopbits
-            //    });
-            //}
         }
 
         public SerialPortStream(SerialPortSettings settings)
         {
-            var port = settings.PortName;
             var serialSettings = settings;
-
+            
             if (settings is TcpSerialPortSettings)
             {
                 m_NativeSerial = new TcpSerial();
@@ -155,7 +130,6 @@ namespace RJCP.IO.Ports
                 if (IsTcpPort(settings.PortName))
                 {
                     serialSettings = new TcpSerialPortSettings(settings);
-
                     m_NativeSerial = new TcpSerial();
                 }
                 else

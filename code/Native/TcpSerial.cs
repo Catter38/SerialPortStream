@@ -61,7 +61,7 @@ namespace RJCP.IO.Ports.Native
         public bool IsRunning => m_Socket != null && m_Socket.Connected;
 
         public string Version => "N/A";
-
+        
         public int DriverInQueue
         {
             get => -1;
@@ -80,7 +80,7 @@ namespace RJCP.IO.Ports.Native
             }
         }
 
-        private readonly Socket m_Socket;
+        private Socket m_Socket;
 
         private string m_Host;
 
@@ -97,10 +97,13 @@ namespace RJCP.IO.Ports.Native
             m_ReceiveWaiter = new AutoResetEvent(false);
 
             PortName = $"{m_Host}:{m_Port}";
-
-            m_Socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
         }
 
+        private Socket CreateSocket()
+        {
+            return new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+        }
+        
         public void UpdateSettings(SerialPortSettings settings)
         {
             if (settings is TcpSerialPortSettings tcpSerialPortSettings)
@@ -133,9 +136,16 @@ namespace RJCP.IO.Ports.Native
 
         public void Open()
         {
-            m_Socket.Connect(m_Host, m_Port);
+            ConnectSocket();
 
             Task.Run(ReceiveLoop);
+        }
+
+        private void ConnectSocket()
+        {
+            m_Socket = CreateSocket();
+            
+            m_Socket.Connect(m_Host, m_Port);
         }
 
         public void Close()
@@ -145,8 +155,24 @@ namespace RJCP.IO.Ports.Native
             m_ReceiveWaiter.Set();
 
             m_Buffer.Serial.Purge();
+
+            WaitWhileCondition(() => IsOpen);
         }
 
+        private void WaitWhileCondition(Func<bool> condition, int timeout = 1000)
+        {
+            var stopWatch = new Stopwatch();
+            
+            stopWatch.Start();
+            
+            while (condition() && stopWatch.ElapsedMilliseconds < timeout)
+            {
+                Thread.Sleep(1);
+            }
+            
+            stopWatch.Stop();
+        }
+        
         public SerialBuffer CreateSerialBuffer(int readBuffer, int writeBuffer)
         {
             return new SerialBuffer(readBuffer, writeBuffer, true);
@@ -193,6 +219,11 @@ namespace RJCP.IO.Ports.Native
         {
             while (IsOpen)
             {
+                if (!m_Socket.Connected)
+                {
+                    ConnectSocket();
+                }
+                
                 m_Socket.BeginReceive(m_Buffer.Serial.ReadBuffer.Array, m_Buffer.Serial.ReadBuffer.End,
                     m_Buffer.Serial.ReadBuffer.WriteLength, SocketFlags.None, ReceiveCallback, null);
 
@@ -204,6 +235,11 @@ namespace RJCP.IO.Ports.Native
         {
             try
             {
+                if (!m_Socket.Connected)
+                {
+                    ConnectSocket();
+                }
+                
                 var receivedBytes = m_Socket.EndReceive(ar);
 
                 if (receivedBytes > 0)
@@ -225,6 +261,11 @@ namespace RJCP.IO.Ports.Native
         {
             try
             {
+                if (!m_Socket.Connected)
+                {
+                    ConnectSocket();
+                }
+            
                 var data = new byte[m_Buffer.Serial.WriteBuffer.ReadLength];
 
                 Array.Copy(m_Buffer.Serial.WriteBuffer.Array, m_Buffer.Serial.WriteBuffer.Start, data, 0,

@@ -183,7 +183,8 @@ namespace RJCP.IO.Ports.Native
             if (!IsOpen) throw new InvalidOperationException("Serial Port not open");
 
             m_Buffer = buffer ?? throw new ArgumentNullException(nameof(buffer));
-            m_Name = name;
+            
+            m_Name = name ?? "N/A";
 
             m_Buffer.WriteEvent += BufferOnWriteEvent;
         }

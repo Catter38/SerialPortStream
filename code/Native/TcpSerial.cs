@@ -254,7 +254,14 @@ namespace RJCP.IO.Ports.Native
             }
             catch (Exception ex)
             {
-                Log.Serial.TraceEvent(TraceEventType.Error, 0, $"{m_Name}: ReceiveCallback: {ex.Message}");
+                try
+                {
+                    Log.Serial.TraceEvent(TraceEventType.Error, 0, $"{m_Name}: ReceiveCallback: {ex.Message}");
+                }
+                catch
+                {
+                    // ignored
+                }
             }
         }
 
@@ -279,7 +286,14 @@ namespace RJCP.IO.Ports.Native
             }
             catch (Exception ex)
             {
-                Log.Serial.TraceEvent(TraceEventType.Error, 0, $"{m_Name}: BufferOnWriteEvent: {ex.Message}");
+                try
+                {
+                    Log.Serial.TraceEvent(TraceEventType.Error, 0, $"{m_Name}: BufferOnWriteEvent: {ex.Message}");
+                }
+                catch
+                {
+                    // ignored
+                }
             }
         }
     }

@@ -10,7 +10,6 @@
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <AssemblyName>RJCP.SerialPortStream</AssemblyName>
     <PackageId>netstandard</PackageId>
-    <PackageTargetFallback>$(PackageTargetFallback);portable-net46</PackageTargetFallback>
     <Configurations>Debug;Release;Signed_Release</Configurations>
   </PropertyGroup>
 
